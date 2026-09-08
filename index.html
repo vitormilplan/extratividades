@@ -1,397 +1,523 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MILPLAN - Gestão de Demandas Extras</title>
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Demandas — Milplan</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
-  <style>
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .nav-tab.active {
-      border-bottom: 2px solid #1e3a8a; /* Azul corporativo */
-      color: #1e3a8a;
-      font-weight: bold;
-    }
-    
-    /* Estilos para a edição inline na tabela */
-    .table-input {
-      width: 100%;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 4px;
-      padding: 4px;
-      font-size: 0.875rem;
-      transition: all 0.2s;
-    }
-    .table-input:hover {
-      background: #f3f4f6;
-    }
-    .table-input:focus {
-      background: #fff;
-      border-color: #3b82f6;
-      outline: none;
-      box-shadow: 0 0 0 1px #3b82f6;
-    }
-    .field-empty {
-      background-color: #fef2f2 !important;
-      border: 1px solid #f87171 !important;
-    }
-  </style>
+:root{
+  --navy-900:#0b1c33; --navy-800:#122c4f; --navy-700:#193a66;
+  --red-600:#a83232; --gold-500:#e0a83e; --blue-400:#5b8fc9;
+  --bg:#eef1f5; --card:#ffffff; --text-dark:#1b2430;
+  --text-muted:#6b7480; --border:#e1e5eb; --green-ok:#2f8f5b;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text-dark);
+  font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{
+  font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:.02em;
+}
+.app{max-width:1280px; margin:0 auto; padding:0 0 60px;}
+
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,var(--navy-900),var(--navy-800));
+  border-bottom:4px solid var(--red-600);
+  padding:22px 28px; display:flex; align-items:center; gap:16px;
+}
+.brand-mark{
+  height:54px; display:flex; align-items:center; justify-content:center;
+  background:#fff; border-radius:8px; padding:6px 12px;
+}
+.brand-mark img{height:100%; width:auto; object-fit:contain;}
+.brand-text h1{color:#fff; font-size:24px; margin:0; font-weight:700;}
+.brand-text .sub{color:#a9bcd6; font-size:12px; letter-spacing:.12em; text-transform:uppercase; margin-top:2px;}
+
+/* CONTROLS */
+.controls{
+  background:var(--card); margin:20px 28px 0; border-radius:12px;
+  border:1px solid var(--border); padding:16px 20px; display:flex; gap:10px; flex-wrap:wrap;
+}
+.tabbtn{
+  font-family:'Inter',sans-serif; font-weight:600; font-size:13px;
+  padding:9px 16px; border-radius:8px; border:1.5px solid var(--border);
+  background:#fff; color:var(--text-muted); cursor:pointer;
+}
+.tabbtn.active{background:var(--navy-800); color:#fff; border-color:var(--navy-800);}
+
+/* SECTIONS & CARDS */
+.section{margin:22px 28px 0;}
+.section-title{
+  font-size:20px; font-weight:700; color:var(--navy-900);
+  display:flex; align-items:center; gap:10px; margin-bottom:12px;
+}
+.section-title .bar{width:4px; height:18px; background:var(--red-600); border-radius:2px;}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:12px;
+  padding:20px; box-shadow:0 1px 3px rgba(15,30,55,.04); margin-bottom:20px;
+}
+
+/* FORMULÁRIO GRID */
+.form-grid{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;
+}
+.field{display:flex; flex-direction:column; gap:6px;}
+.field label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:700;}
+.input-text, select{
+  font-family:'Inter',sans-serif; font-size:13px; padding:9px 12px;
+  border-radius:8px; border:1.5px solid var(--border); background:#fff; color:var(--text-dark); width:100%;
+}
+.btn-submit{
+  background:var(--green-ok); color:#fff; border:none; padding:10px 20px;
+  border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; margin-top:16px;
+}
+.btn-submit:hover{background:#257348;}
+.btn-delete{
+  background:#fdeceb; color:var(--red-600); border:1px solid #f0b8b0;
+  padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;
+}
+.btn-add{
+  background:var(--navy-800); color:#fff; border:none; padding:9px 12px;
+  border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;
+}
+.btn-outline{
+  background:#fff; color:var(--text-muted); border:1px solid var(--border);
+  padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;
+}
+.btn-outline:hover{background:#f5f7fa;}
+
+/* CONFIG LISTS */
+.config-list{
+  list-style:none; padding:0; margin:16px 0 0 0;
+}
+.config-list li{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 12px; border-bottom:1px solid #f0f2f5; font-size:13px;
+}
+.config-list li:hover{background:#fafbfc;}
+
+/* TABELA */
+.data-table{width:100%; border-collapse:collapse; font-size:13px;}
+.data-table th{
+  background:var(--navy-800); color:#fff; text-align:left; padding:9px 12px; font-weight:700; font-size:11.5px;
+}
+.data-table td{padding:9px 12px; border-bottom:1px solid #f0f2f5; vertical-align:middle;}
+.data-table tr:hover td{background:#fafbfc;}
+.badge-pendente{
+  background:#fff8ea; color:#c78a1e; border:1px solid #f0d99a; 
+  padding:3px 6px; border-radius:4px; font-size:11px; font-weight:700;
+}
+
+/* GRÁFICOS */
+.charts-grid{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); gap:20px;
+}
+.chart-container{
+  background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px;
+  position:relative; height:300px;
+}
+.chart-container.full-width{
+  grid-column: 1 / -1; height:350px;
+}
+.chart-title{font-size:14px; font-weight:700; color:var(--navy-900); text-align:center; margin-bottom:10px;}
+
+/* MODAL FINALIZAR */
+.modal-overlay{
+  display:none; position:fixed; inset:0; background:rgba(10,18,36,.55);
+  z-index:1000; align-items:center; justify-content:center; padding:20px;
+}
+.modal-box{
+  background:#fff; border-radius:14px; max-width:400px; width:100%;
+  padding:26px 28px; box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans">
+<body>
 
-  <!-- Header -->
-  <header class="bg-blue-900 text-white shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold">MILPLAN Engenharia</h1>
-        <p class="text-sm text-blue-200">Sistema de Gestão de Demandas Extras</p>
-      </div>
-      <i data-lucide="clipboard-check" class="w-8 h-8 text-blue-200"></i>
+<div class="app">
+  <div class="header">
+    <div class="brand-mark">
+      <img src="data:image/png;base64,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" alt="Milplan">
     </div>
-  </header>
-
-  <!-- Navegação das Abas -->
-  <div class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-    <div class="max-w-7xl mx-auto px-4 flex gap-6">
-      <button onclick="switchTab('demandas')" id="tab-demandas" class="nav-tab active py-4 px-2 text-gray-600 hover:text-blue-900 transition flex items-center gap-2">
-        <i data-lucide="list" class="w-4 h-4"></i> Registro de Demandas
-      </button>
-      <button onclick="switchTab('graficos')" id="tab-graficos" class="nav-tab py-4 px-2 text-gray-600 hover:text-blue-900 transition flex items-center gap-2">
-        <i data-lucide="line-chart" class="w-4 h-4"></i> Indicadores Mensais
-      </button>
-      <button onclick="switchTab('parametros')" id="tab-parametros" class="nav-tab py-4 px-2 text-gray-600 hover:text-blue-900 transition flex items-center gap-2">
-        <i data-lucide="settings" class="w-4 h-4"></i> Parâmetros Configuráveis
-      </button>
+    <div class="brand-text">
+      <h1>Registro de Demandas Extra</h1>
+      <div class="sub">Milplan Engenharia · QSMS Qualidade · Painel de Acompanhamento</div>
     </div>
   </div>
 
-  <main class="max-w-[1400px] mx-auto px-4 py-6">
+  <div class="controls">
+    <button class="tabbtn active" data-tab="registro">Registrar & Consultar</button>
+    <button class="tabbtn" data-tab="dashboard">Dashboard & Gráficos</button>
+    <button class="tabbtn" data-tab="config">⚙️ Parâmetros</button>
+  </div>
 
-    <!-- ABA 1: REGISTRO DE DEMANDAS -->
-    <div id="content-demandas" class="tab-content active">
-      
-      <!-- Barra de Ferramentas -->
-      <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div class="flex items-center gap-2 w-full md:w-1/3">
-          <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
-          <input type="text" id="searchInput" oninput="renderTable()" placeholder="Buscar demandas..." class="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 p-2 border">
-        </div>
-        
-        <div class="flex flex-wrap gap-2">
-          <button onclick="downloadTemplate()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded font-medium text-sm flex items-center gap-2">
-            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Baixar Modelo
-          </button>
-          
-          <input type="file" id="excelInput" accept=".xlsx, .xls" class="hidden" onchange="importExcel(event)">
-          <button onclick="document.getElementById('excelInput').click()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded font-medium text-sm flex items-center gap-2">
-            <i data-lucide="upload" class="w-4 h-4"></i> Importar
-          </button>
+  <div id="content"></div>
+</div>
 
-          <button onclick="exportToExcel()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded font-medium text-sm flex items-center gap-2">
-            <i data-lucide="download" class="w-4 h-4"></i> Exportar
-          </button>
+<!-- Modal para Finalizar/Editar Demanda -->
+<div id="modalFinalizar" class="modal-overlay">
+  <div class="modal-box">
+    <h3 style="margin-top:0; color:var(--navy-800); font-size:18px; margin-bottom:16px;">Finalizar Demanda</h3>
+    <form id="formFinalizar">
+      <div class="field" style="margin-bottom:12px;">
+        <label>Responsável pela Resposta</label>
+        <select id="modResponsavel" required></select>
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Data de Finalização</label>
+        <input type="date" id="modDataFim" class="input-text" required>
+      </div>
+      <div class="field" style="margin-bottom:20px;">
+        <label>Tempo Despendido (h)</label>
+        <input type="number" id="modTempo" class="input-text" min="0" step="0.5" required>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn-outline" onclick="fecharModal()">Cancelar</button>
+        <button type="submit" class="btn-submit" style="margin:0;">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-          <button onclick="addDemand()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded font-bold text-sm flex items-center gap-2">
-            <i data-lucide="plus" class="w-4 h-4"></i> Nova Demanda
-          </button>
-        </div>
+<script>
+// ---------- ESTADO DA APLICAÇÃO ----------
+let STATE = { 
+  demandas: [],
+  tipos: [],
+  setoresSolicitantes: [],
+  setoresResponsaveis: [],
+  responsaveis: []
+};
+let currentTab = 'registro';
+let demandaEditando = null;
+let charts = {};
+
+function loadState() {
+  const saved = localStorage.getItem('milplan_demandas_v3');
+  if (saved) {
+    STATE = JSON.parse(saved);
+  } else {
+    STATE.demandas = [
+      { id: '1', codigo: 'REQ-001', nome: 'Análise de soldagem TIG', tipo: 'Análise de Documentação', setorSolicitante: 'Engenharia', setorResponsavel: 'Qualidade', responsavel: 'Vitor Hugo', dataChegada: '2026-08-01', dataFim: '2026-08-02', tempoGasto: 4 },
+      { id: '2', codigo: 'REQ-002', nome: 'Levantamento de escopo PPP', tipo: 'PPPs', setorSolicitante: 'RH', setorResponsavel: 'Segurança', responsavel: '', dataChegada: '2026-09-02', dataFim: '', tempoGasto: null }
+    ];
+    STATE.tipos = ['Análise de Documentação', 'PPPs', 'Orçamentos', 'Auditoria'];
+    STATE.setoresSolicitantes = ['Engenharia', 'RH', 'Manutenção', 'Suprimentos'];
+    STATE.setoresResponsaveis = ['Qualidade', 'Segurança', 'Meio Ambiente'];
+    STATE.responsaveis = ['Vitor Hugo', 'Carlos', 'Ana'];
+    saveState();
+  }
+}
+
+function saveState() {
+  localStorage.setItem('milplan_demandas_v3', JSON.stringify(STATE));
+}
+
+const contentEl = document.getElementById('content');
+
+function render() {
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {};
+
+  document.querySelectorAll('.tabbtn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === currentTab);
+  });
+
+  if (currentTab === 'registro') renderRegistroTab();
+  else if (currentTab === 'dashboard') renderDashboardTab();
+  else if (currentTab === 'config') renderConfigTab();
+}
+
+// ---------- ABA 1: REGISTRO ----------
+function renderRegistroTab() {
+  const getOptions = (arr) => arr.map(i => `<option value="${i}">${i}</option>`).join('');
+
+  contentEl.innerHTML = `
+    <div class="section">
+      <div class="section-title"><span class="bar"></span>Nova Demanda</div>
+      <div class="card">
+        <form id="demandaForm">
+          <div class="form-grid">
+            <div class="field"><label>Código</label><input type="text" id="inpCodigo" class="input-text" placeholder="Ex: REQ-045" required></div>
+            <div class="field"><label>Descrição</label><input type="text" id="inpNome" class="input-text" placeholder="O que foi solicitado..." required></div>
+            <div class="field"><label>Tipo de Demanda</label><select id="inpTipo" required><option value="">Selecione...</option>${getOptions(STATE.tipos)}</select></div>
+            <div class="field"><label>Setor Solicitante</label><select id="inpSetorSolicitante" required><option value="">Selecione...</option>${getOptions(STATE.setoresSolicitantes)}</select></div>
+            <div class="field"><label>Setor Responsável</label><select id="inpSetorResponsavel" required><option value="">Selecione...</option>${getOptions(STATE.setoresResponsaveis)}</select></div>
+            <div class="field"><label>Data de Chegada</label><input type="date" id="inpDataChegada" class="input-text" required></div>
+          </div>
+          <button type="submit" class="btn-submit">Cadastrar Demanda</button>
+        </form>
       </div>
 
-      <!-- Tabela -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-        <table class="w-full text-sm text-left">
-          <thead class="bg-gray-100 text-gray-700 font-semibold border-b">
+      <div class="section-title"><span class="bar"></span>Demandas Registradas</div>
+      <div class="card" style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
             <tr>
-              <th class="p-3">Código</th>
-              <th class="p-3 min-w-[200px]">Descrição da Tarefa</th>
-              <th class="p-3">Tipo</th>
-              <th class="p-3">Setor Solicitante</th>
-              <th class="p-3">Setor Responsável</th>
-              <th class="p-3">Resp. Resposta</th>
-              <th class="p-3">Data Chegada</th>
-              <th class="p-3">Data Finalização</th>
-              <th class="p-3 w-20">Tempo(h)</th>
-              <th class="p-3 text-center">Status</th>
-              <th class="p-3 text-center">Ações</th>
+              <th>Código</th><th>Nome</th><th>Tipo</th><th>Solicitante</th><th>Setor Resp.</th>
+              <th>Pessoa Resp.</th><th>Chegada</th><th>Finalização</th><th>Tempo (h)</th><th>Ações</th>
             </tr>
           </thead>
-          <tbody id="demandsBody" class="divide-y divide-gray-200">
-            <!-- Renderizado via JS -->
+          <tbody>
+            ${STATE.demandas.length === 0 ? '<tr><td colspan="10" style="text-align:center; color:var(--text-muted);">Nenhuma demanda.</td></tr>' : ''}
+            ${STATE.demandas.slice().reverse().map(d => {
+              const isPendente = !d.dataFim || d.tempoGasto === null || d.tempoGasto === "";
+              return `
+              <tr>
+                <td><b>${d.codigo}</b></td>
+                <td>${d.nome}</td>
+                <td>${d.tipo}</td>
+                <td>${d.setorSolicitante}</td>
+                <td>${d.setorResponsavel}</td>
+                <td>${d.responsavel ? d.responsavel : '<span class="badge-pendente">PENDENTE</span>'}</td>
+                <td>${formatDate(d.dataChegada)}</td>
+                <td>${!isPendente ? formatDate(d.dataFim) : '-'}</td>
+                <td>${!isPendente ? d.tempoGasto + 'h' : '-'}</td>
+                <td>
+                  <div style="display:flex; gap:6px;">
+                    ${isPendente 
+                      ? `<button class="btn-submit" style="margin:0; padding:6px 10px; font-size:11.5px;" onclick="abrirModal('${d.id}')">Finalizar</button>` 
+                      : `<button class="btn-outline" style="margin:0; padding:6px 10px; font-size:11.5px;" onclick="abrirModal('${d.id}')">Editar</button>`}
+                    <button class="btn-delete" onclick="deleteDemanda('${d.id}')">Excluir</button>
+                  </div>
+                </td>
+              </tr>
+            `}).join('')}
           </tbody>
         </table>
       </div>
     </div>
+  `;
 
-    <!-- ABA 2: GRÁFICOS (Gráfico de Linha Mensal) -->
-    <div id="content-graficos" class="tab-content">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 class="text-lg font-bold text-gray-800 mb-4">Volume de Demandas (Mensal)</h3>
-          <canvas id="lineChartVolume"></canvas>
+  document.getElementById('demandaForm').onsubmit = function(e) {
+    e.preventDefault();
+    const novaDemanda = {
+      id: Math.random().toString(36).substr(2, 9),
+      codigo: document.getElementById('inpCodigo').value.trim(),
+      nome: document.getElementById('inpNome').value.trim(),
+      tipo: document.getElementById('inpTipo').value,
+      setorSolicitante: document.getElementById('inpSetorSolicitante').value,
+      setorResponsavel: document.getElementById('inpSetorResponsavel').value,
+      dataChegada: document.getElementById('inpDataChegada').value,
+      responsavel: "", 
+      dataFim: "",     
+      tempoGasto: null 
+    };
+    STATE.demandas.push(novaDemanda);
+    saveState();
+    render();
+  };
+}
+
+window.abrirModal = function(id) {
+  demandaEditando = STATE.demandas.find(d => d.id === id);
+  if(!demandaEditando) return;
+  
+  const selectResp = document.getElementById('modResponsavel');
+  selectResp.innerHTML = '<option value="">Selecione...</option>' + STATE.responsaveis.map(i => `<option value="${i}">${i}</option>`).join('');
+  
+  selectResp.value = demandaEditando.responsavel || '';
+  document.getElementById('modDataFim').value = demandaEditando.dataFim || '';
+  document.getElementById('modTempo').value = demandaEditando.tempoGasto !== null ? demandaEditando.tempoGasto : '';
+  
+  document.getElementById('modalFinalizar').style.display = 'flex';
+}
+
+window.fecharModal = function() {
+  document.getElementById('modalFinalizar').style.display = 'none';
+  demandaEditando = null;
+}
+
+document.getElementById('formFinalizar').onsubmit = function(e) {
+  e.preventDefault();
+  if(!demandaEditando) return;
+  
+  demandaEditando.responsavel = document.getElementById('modResponsavel').value;
+  demandaEditando.dataFim = document.getElementById('modDataFim').value;
+  demandaEditando.tempoGasto = parseFloat(document.getElementById('modTempo').value);
+  
+  saveState();
+  fecharModal();
+  render();
+}
+
+window.deleteDemanda = function(id) {
+  if(confirm('Excluir esta demanda?')) {
+    STATE.demandas = STATE.demandas.filter(d => d.id !== id);
+    saveState();
+    render();
+  }
+};
+
+function formatDate(dateString) {
+  if(!dateString) return '-';
+  const parts = dateString.split('-');
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+// ---------- ABA 2: DASHBOARD ----------
+function renderDashboardTab() {
+  contentEl.innerHTML = `
+    <div class="section">
+      <div class="section-title"><span class="bar"></span>Análise de Demandas</div>
+      <div class="charts-grid">
+        <div class="chart-container full-width">
+          <div class="chart-title">Demandas Concluídas por Período (Mês)</div>
+          <canvas id="chartEvolucao"></canvas>
         </div>
-        
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 class="text-lg font-bold text-gray-800 mb-4">Resumo Geral</h3>
-          <div class="grid grid-cols-2 gap-4 text-center mt-8">
-            <div class="bg-blue-50 p-4 rounded-lg">
-              <p class="text-3xl font-bold text-blue-700" id="stat-total">0</p>
-              <p class="text-sm text-blue-600 font-medium">Total Registrado</p>
-            </div>
-            <div class="bg-amber-50 p-4 rounded-lg">
-              <p class="text-3xl font-bold text-amber-600" id="stat-pendentes">0</p>
-              <p class="text-sm text-amber-700 font-medium">Pendentes</p>
-            </div>
-            <div class="bg-green-50 p-4 rounded-lg col-span-2">
-              <p class="text-3xl font-bold text-green-600" id="stat-concluidos">0</p>
-              <p class="text-sm text-green-700 font-medium">Concluídos</p>
-            </div>
-          </div>
+        <div class="chart-container">
+          <div class="chart-title">Distribuição por Tipo de Demanda</div>
+          <canvas id="chartTipos"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-title">Tempo Gasto por Setor Solicitante (Horas)</div>
+          <canvas id="chartSetores"></canvas>
         </div>
       </div>
     </div>
+  `;
 
-    <!-- ABA 3: PARÂMETROS CONFIGURÁVEIS -->
-    <div id="content-parametros" class="tab-content">
-      <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Configuração do Sistema</h3>
-        <p class="text-gray-600 mb-6">Área reservada para personalização das listas suspensas que serão implementadas em versões futuras (Setores, Tipos de Documentação, PPPs, etc).</p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="border rounded p-4">
-            <h4 class="font-bold mb-2">Tipos de Demanda</h4>
-            <ul class="text-sm text-gray-600 list-disc pl-5">
-              <li>Elaboração de PPP</li>
-              <li>Análise de Documentação</li>
-              <li>Auditoria ISO</li>
-              <li>Orçamentos</li>
-            </ul>
-          </div>
-          <div class="border rounded p-4">
-            <h4 class="font-bold mb-2">Setores</h4>
-            <ul class="text-sm text-gray-600 list-disc pl-5">
-              <li>Qualidade (SIG)</li>
-              <li>Engenharia</li>
-              <li>Recursos Humanos</li>
-              <li>Segurança do Trabalho</li>
-            </ul>
-          </div>
-        </div>
+  // Renderiza os gráficos logo após injetar o HTML
+  setTimeout(() => {
+    const finalizadas = STATE.demandas.filter(d => d.dataFim && d.tempoGasto !== null);
+    const themeColors = ['#122c4f', '#a83232', '#e0a83e', '#5b8fc9', '#2f8f5b', '#6b7480', '#1b2430'];
+
+    // 1. Gráfico de Evolução (Linha)
+    const evolucaoData = {};
+    finalizadas.forEach(d => {
+      const mesAno = d.dataFim.substring(0, 7);
+      evolucaoData[mesAno] = (evolucaoData[mesAno] || 0) + 1;
+    });
+    const evolucaoLabels = Object.keys(evolucaoData).sort();
+    
+    charts.evolucao = new Chart(document.getElementById('chartEvolucao'), {
+      type: 'line',
+      data: {
+        labels: evolucaoLabels,
+        datasets: [{
+          label: 'Demandas Finalizadas',
+          data: evolucaoLabels.map(l => evolucaoData[l]),
+          borderColor: '#a83232',
+          backgroundColor: 'rgba(168, 50, 50, 0.1)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // 2. Gráfico por Tipos (Doughnut)
+    const tiposData = {};
+    STATE.demandas.forEach(d => {
+      tiposData[d.tipo] = (tiposData[d.tipo] || 0) + 1;
+    });
+    
+    charts.tipos = new Chart(document.getElementById('chartTipos'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(tiposData),
+        datasets: [{
+          data: Object.values(tiposData),
+          backgroundColor: themeColors
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // 3. Gráfico de Tempo por Setor (Barra)
+    const setoresData = {};
+    finalizadas.forEach(d => {
+      setoresData[d.setorSolicitante] = (setoresData[d.setorSolicitante] || 0) + parseFloat(d.tempoGasto);
+    });
+    
+    charts.setores = new Chart(document.getElementById('chartSetores'), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(setoresData),
+        datasets: [{
+          label: 'Horas Totais',
+          data: Object.values(setoresData),
+          backgroundColor: '#122c4f'
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  }, 100);
+}
+
+// ---------- ABA 3: PARÂMETROS ----------
+function renderConfigTab() {
+  const renderCardConfig = (titulo, key) => `
+    <div class="card">
+      <div class="section-title"><span class="bar"></span>${titulo}</div>
+      <div style="display:flex; gap:10px; margin-bottom:12px;">
+        <input type="text" id="inpNew_${key}" class="input-text" placeholder="Adicionar novo...">
+        <button class="btn-add" onclick="addConfig('${key}')">Adicionar</button>
+      </div>
+      <ul class="config-list">
+        ${STATE[key].length === 0 ? '<li style="color:var(--text-muted);">Nenhum item configurado.</li>' : ''}
+        ${STATE[key].map((item, index) => `
+          <li>
+            <span>${item}</span>
+            <button class="btn-delete" onclick="removeConfig('${key}', ${index})">Remover</button>
+          </li>
+        `).join('')}
+      </ul>
+    </div>
+  `;
+
+  contentEl.innerHTML = `
+    <div class="section">
+      <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+        ${renderCardConfig('Tipos de Demanda', 'tipos')}
+        ${renderCardConfig('Setores Solicitantes', 'setoresSolicitantes')}
+        ${renderCardConfig('Setores Responsáveis', 'setoresResponsaveis')}
+        ${renderCardConfig('Pessoas Responsáveis', 'responsaveis')}
       </div>
     </div>
+  `;
+}
 
-  </main>
+window.addConfig = function(key) {
+  const inputEl = document.getElementById(`inpNew_${key}`);
+  const valor = inputEl.value.trim();
+  
+  if (valor && !STATE[key].includes(valor)) {
+    STATE[key].push(valor);
+    saveState();
+    render();
+  } else if (STATE[key].includes(valor)) {
+    alert('Este item já está cadastrado.');
+  }
+};
 
-  <script>
-    lucide.createIcons();
+window.removeConfig = function(key, index) {
+  if (confirm('Tem certeza que deseja remover este item?')) {
+    STATE[key].splice(index, 1);
+    saveState();
+    render();
+  }
+};
 
-    // Controle de Abas
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-      
-      document.getElementById(`content-${tabId}`).classList.add('active');
-      document.getElementById(`tab-${tabId}`).classList.add('active');
+// Listeners das Abas Principais
+document.querySelectorAll('.tabbtn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    currentTab = e.target.dataset.tab;
+    render();
+  });
+});
 
-      if(tabId === 'graficos') {
-        updateCharts();
-      }
-    }
+// INICIALIZAÇÃO
+loadState();
+render();
 
-    // Banco de Dados Local
-    let demandas = JSON.parse(localStorage.getItem('milplan_demandas')) || [];
-    let chartInstance = null;
-
-    function saveData() {
-      localStorage.setItem('milplan_demandas', JSON.stringify(demandas));
-      updateDashboardStats();
-    }
-
-    // Lógica de Pendência
-    function checkStatus(d) {
-      const isComplete = d.id && d.descricao && d.tipo && d.solicitante && d.responsavelSetor && d.responsavelResposta && d.dataChegada && d.dataFinalizacao && d.tempoReal;
-      return isComplete ? "CONCLUIDO" : "PENDENTE";
-    }
-
-    function addDemand() {
-      demandas.unshift({
-        id: `DEM-${Date.now().toString().slice(-4)}`,
-        descricao: "",
-        tipo: "",
-        solicitante: "",
-        responsavelSetor: "",
-        responsavelResposta: "",
-        dataChegada: new Date().toISOString().split('T')[0],
-        dataFinalizacao: "",
-        tempoReal: ""
-      });
-      saveData();
-      renderTable();
-    }
-
-    function updateField(index, field, value) {
-      demandas[index][field] = value;
-      saveData();
-      renderTable();
-    }
-
-    function deleteDemand(index) {
-      if(confirm("Excluir esta demanda?")) {
-        demandas.splice(index, 1);
-        saveData();
-        renderTable();
-      }
-    }
-
-    // Renderizar Tabela
-    function renderTable() {
-      const tbody = document.getElementById('demandsBody');
-      const term = document.getElementById('searchInput').value.toLowerCase();
-      tbody.innerHTML = '';
-
-      demandas.forEach((d, i) => {
-        if (term && !Object.values(d).join(' ').toLowerCase().includes(term)) return;
-
-        const status = checkStatus(d);
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-blue-50/30 transition";
-
-        tr.innerHTML = `
-          <td class="p-2"><input class="table-input ${!d.id ? 'field-empty' : ''}" value="${d.id || ''}" onchange="updateField(${i}, 'id', this.value)"></td>
-          <td class="p-2"><input class="table-input ${!d.descricao ? 'field-empty' : ''}" value="${d.descricao || ''}" onchange="updateField(${i}, 'descricao', this.value)"></td>
-          <td class="p-2"><input class="table-input ${!d.tipo ? 'field-empty' : ''}" value="${d.tipo || ''}" onchange="updateField(${i}, 'tipo', this.value)"></td>
-          <td class="p-2"><input class="table-input ${!d.solicitante ? 'field-empty' : ''}" value="${d.solicitante || ''}" onchange="updateField(${i}, 'solicitante', this.value)"></td>
-          <td class="p-2"><input class="table-input ${!d.responsavelSetor ? 'field-empty' : ''}" value="${d.responsavelSetor || ''}" onchange="updateField(${i}, 'responsavelSetor', this.value)"></td>
-          <td class="p-2"><input class="table-input ${!d.responsavelResposta ? 'field-empty' : ''}" value="${d.responsavelResposta || ''}" onchange="updateField(${i}, 'responsavelResposta', this.value)"></td>
-          <td class="p-2"><input type="date" class="table-input ${!d.dataChegada ? 'field-empty' : ''}" value="${d.dataChegada || ''}" onchange="updateField(${i}, 'dataChegada', this.value)"></td>
-          <td class="p-2"><input type="date" class="table-input ${!d.dataFinalizacao ? 'field-empty' : ''}" value="${d.dataFinalizacao || ''}" onchange="updateField(${i}, 'dataFinalizacao', this.value)"></td>
-          <td class="p-2"><input type="number" step="0.5" class="table-input text-center ${!d.tempoReal ? 'field-empty' : ''}" value="${d.tempoReal || ''}" onchange="updateField(${i}, 'tempoReal', this.value)"></td>
-          <td class="p-2 text-center">
-            ${status === 'CONCLUIDO' 
-              ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Concluído</span>' 
-              : '<span class="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-bold">Pendente</span>'}
-          </td>
-          <td class="p-2 text-center">
-            <button onclick="deleteDemand(${i})" class="text-gray-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-      lucide.createIcons();
-      updateDashboardStats();
-    }
-
-    // Importação / Exportação Excel
-    function downloadTemplate() {
-      const data = [{
-        "Código": "DEM-001", "Descrição": "Análise de PPP", "Tipo": "Documentação",
-        "Solicitante": "RH", "Setor Responsável": "Segurança", "Responsável Resposta": "Vitor",
-        "Data Chegada": "2026-09-01", "Data Finalização": "", "Tempo Real (h)": ""
-      }];
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Modelo");
-      XLSX.writeFile(wb, "Modelo_Importacao_Milplan.xlsx");
-    }
-
-    function exportToExcel() {
-      const exportData = demandas.map(d => ({
-        "Código": d.id, "Descrição": d.descricao, "Tipo": d.tipo,
-        "Solicitante": d.solicitante, "Setor Responsável": d.responsavelSetor,
-        "Responsável Resposta": d.responsavelResposta, "Data Chegada": d.dataChegada,
-        "Data Finalização": d.dataFinalizacao, "Tempo Real (h)": d.tempoReal,
-        "Status": checkStatus(d)
-      }));
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Demandas");
-      XLSX.writeFile(wb, `Demandas_Milplan_${new Date().toISOString().split('T')[0]}.xlsx`);
-    }
-
-    function importExcel(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const wb = XLSX.read(evt.target.result, {type: 'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws);
-        
-        json.forEach(row => {
-          const item = {
-            id: String(row['Código'] || row['Codigo'] || '').trim(),
-            descricao: String(row['Descrição'] || row['Descricao'] || '').trim(),
-            tipo: String(row['Tipo'] || '').trim(),
-            solicitante: String(row['Solicitante'] || '').trim(),
-            responsavelSetor: String(row['Setor Responsável'] || row['Setor Responsavel'] || '').trim(),
-            responsavelResposta: String(row['Responsável Resposta'] || row['Responsavel Resposta'] || '').trim(),
-            dataChegada: String(row['Data Chegada'] || '').trim(),
-            dataFinalizacao: String(row['Data Finalização'] || row['Data Finalizacao'] || '').trim(),
-            tempoReal: String(row['Tempo Real (h)'] || row['Tempo Real'] || '').trim()
-          };
-          if(item.id) demandas.unshift(item);
-        });
-        saveData();
-        renderTable();
-        alert(`${json.length} registros importados!`);
-        e.target.value = '';
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    // Gráficos e Dashboard
-    function updateDashboardStats() {
-      const concluidos = demandas.filter(d => checkStatus(d) === 'CONCLUIDO').length;
-      document.getElementById('stat-total').innerText = demandas.length;
-      document.getElementById('stat-concluidos').innerText = concluidos;
-      document.getElementById('stat-pendentes').innerText = demandas.length - concluidos;
-    }
-
-    function updateCharts() {
-      const ctx = document.getElementById('lineChartVolume').getContext('2d');
-      
-      // Agrupar por Mês/Ano (simplificado)
-      const counts = {};
-      demandas.forEach(d => {
-        if(d.dataChegada) {
-          const mes = d.dataChegada.substring(0, 7); // Pega YYYY-MM
-          counts[mes] = (counts[mes] || 0) + 1;
-        }
-      });
-
-      const labels = Object.keys(counts).sort();
-      const data = labels.map(l => counts[l]);
-
-      if(chartInstance) chartInstance.destroy();
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels.length ? labels : ['Sem dados'],
-          datasets: [{
-            label: 'Demandas Recebidas',
-            data: data.length ? data : [0],
-            borderColor: '#1e3a8a',
-            backgroundColor: 'rgba(30, 58, 138, 0.1)',
-            borderWidth: 2,
-            tension: 0.3,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
-      });
-    }
-
-    renderTable();
-  </script>
+</script>
 </body>
 </html>
